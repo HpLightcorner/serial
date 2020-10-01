@@ -1,29 +1,41 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(serial)
 
+# options
+option(SERIAL_USE_CATKIN "Use Catkin to build and install Serial" OFF)
+option(SERIAL_BUILD_EXAMPLE "Use Catkin to build and install Serial" OFF)
+
 # Find catkin
-find_package(catkin REQUIRED)
+if(SERIAL_USE_CATKIN)
+    message(STATUS "Using catkin")
+    find_package(catkin REQUIRED)
+endif()
 
 if(APPLE)
     find_library(IOKIT_LIBRARY IOKit)
     find_library(FOUNDATION_LIBRARY Foundation)
 endif()
 
+
 if(UNIX AND NOT APPLE)
     # If Linux, add rt and pthread
     set(rt_LIBRARIES rt)
     set(pthread_LIBRARIES pthread)
-    catkin_package(
-        LIBRARIES ${PROJECT_NAME}
-        INCLUDE_DIRS include
-        DEPENDS rt pthread
-    )
+    if(SERIAL_USE_CATKIN)
+        catkin_package(
+            LIBRARIES ${PROJECT_NAME}
+            INCLUDE_DIRS include
+            DEPENDS rt pthread
+        )
+    endif()
 else()
     # Otherwise normal call
-    catkin_package(
-        LIBRARIES ${PROJECT_NAME}
-        INCLUDE_DIRS include
-    )
+    if(SERIAL_USE_CATKIN)
+        catkin_package(
+            LIBRARIES ${PROJECT_NAME}
+            INCLUDE_DIRS include
+        )
+    endif()
 endif()
 
 ## Sources
@@ -57,25 +69,30 @@ else()
 endif()
 
 ## Uncomment for example
-add_executable(serial_example examples/serial_example.cc)
-add_dependencies(serial_example ${PROJECT_NAME})
-target_link_libraries(serial_example ${PROJECT_NAME})
+if(SERIAL_BUILD_EXAMPLE)
+    add_executable(serial_example examples/serial_example.cc)
+    add_dependencies(serial_example ${PROJECT_NAME})
+    target_link_libraries(serial_example ${PROJECT_NAME})
+endif()
 
 ## Include headers
 include_directories(include)
 
 ## Install executable
-install(TARGETS ${PROJECT_NAME}
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+if(SERIAL_USE_CATKIN)
+    install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}    
+    )
+
 
 ## Install headers
-install(FILES include/serial/serial.h include/serial/v8stdint.h
-  DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/serial)
+    install(FILES include/serial/serial.h include/serial/v8stdint.h
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}/serial)
 
 ## Tests
-if(CATKIN_ENABLE_TESTING)
-    add_subdirectory(tests)
+    if(CATKIN_ENABLE_TESTING)
+        add_subdirectory(tests)
+    endif()
 endif()
